@@ -8,7 +8,6 @@ import com.saeed.wallethub.logparser.repository.LogRepository;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -27,6 +26,11 @@ public class LogParserService {
 	private Logger logger = LoggerFactory.getLogger(LogParserService.class);
 	private static final String DATE_TIME_FORMAT = "yyyy-MM-dd.HH:mm:ss";
 
+	private static final String ACCESS_LOG = "accesslog";
+	private static final String START_DATE = "startDate";
+	private static final String DURATION = "duration";
+	private static final String THRESHOLD = "threshold";
+
 	private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
 	private LogRepository logRepository;
@@ -41,7 +45,8 @@ public class LogParserService {
 	public void extractLogs(String... args) throws IOException {
 		ParsedOptions parsedOptions = parseArgOptions(args);
 		if (parsedOptions == null) {
-			logger.debug("An error occurred while parsing args");
+			logger.info("An error occurred while parsing args");
+			System.exit(1);
 			return;
 		}
 		FileInputStream inputStream = parsedOptions.getLogFileInputStream();
@@ -52,7 +57,7 @@ public class LogParserService {
 				continue;
 			}
 			Log log = parseLog(splittedLine);
-			logger.info("Parsed log {}",log);
+			logger.info("Parsed log {}", log);
 
 		}
 		inputStream.close();
@@ -61,7 +66,7 @@ public class LogParserService {
 		}
 	}
 
-	private Log parseLog(String[] splittedLine) throws DateTimeParseException{
+	private Log parseLog(String[] splittedLine) throws DateTimeParseException {
 		Log log = new Log();
 
 		LocalDateTime startDateTime = LocalDateTime.parse(splittedLine[0], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
@@ -76,20 +81,27 @@ public class LogParserService {
 	private ParsedOptions parseArgOptions(String... args) throws IOException {
 		Options options = new Options();
 		//access log path
-		options.addOption(getOption("a", "accesslog", "Path to access log"));
-		options.addOption(getOption("s", "startDate", String.format("Start date and time of request. Format is %s", DATE_TIME_FORMAT)));
-		options.addOption(getOption("d", "duration", "Duration to use for filtering. Can be either hourly or daily"));
-		options.addOption(getOption("t", "threshold", "Minimum number of requests coming from the same IP. Should be an integer"));
+		options.addOption(getOption("a", ACCESS_LOG, "Path to access log"));
+		options.addOption(getOption("s", START_DATE, String.format("Start date and time of request. Format is %s", DATE_TIME_FORMAT)));
+		options.addOption(getOption("d", DURATION, "Duration to use for filtering. Can be either hourly or daily"));
+		options.addOption(getOption("t", THRESHOLD, "Minimum number of requests coming from the same IP. Should be an integer"));
 
 		CommandLineParser commandLineParser = new DefaultParser();
 		String startDate = "";
-		FileInputStream inputStream = null;
+		FileInputStream inputStream;
 		try {
 			CommandLine commandLine = commandLineParser.parse(options, args);
+			if (!commandLine.hasOption(ACCESS_LOG) ||
+					!commandLine.hasOption(START_DATE) ||
+					!commandLine.hasOption(DURATION) ||
+					!commandLine.hasOption(THRESHOLD)) {
+				showHelp(options);
+				return null;
+			}
+
 			Duration duration = Duration.parse(commandLine.getOptionValue("duration"));
 			if (duration == null) {
 				showHelp(options);
-				return null;
 			}
 
 			startDate = commandLine.getOptionValue("startDate");
@@ -106,16 +118,16 @@ public class LogParserService {
 					.build();
 
 		} catch (DateTimeParseException dateTimeException) {
-			logger.error("Error parsing passed date {}. Exception {}", startDate);
+			logger.info("Error parsing passed date {}. Exception {}", startDate);
 			showHelp(options);
 		} catch (ParseException e) {
-			logger.error("Error parsing arguments {}. Exception {}", args, e);
+			logger.info("Error parsing arguments {}. Exception {}", args, e);
 			showHelp(options);
 		} catch (NumberFormatException e) {
-			logger.error("Error parsing threshold {}. Exception {}", args, e);
+			logger.info("Error parsing threshold {}. Exception {}", args, e);
 			showHelp(options);
 		} catch (FileNotFoundException e) {
-			logger.error("File was not found {}. Exception {}", args, e);
+			logger.info("File was not found {}. Exception {}", args, e);
 			showHelp(options);
 		}
 		return null;
