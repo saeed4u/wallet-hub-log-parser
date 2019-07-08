@@ -27,7 +27,7 @@ public class ParserTests {
 
 	@Test
 	public void testExtractLogsExpectSuccess() throws IOException {
-		String[] args = new String[]{"--startDate=2017-01-01.00:00:00", "--duration=daily", "--threshold=500", "--accesslog=/Users/brasaeed/Downloads/Java_MySQL_Test/access.log"};
+		String[] args = {"--startDate=2017-01-01.00:00:00", "--duration=daily", "--threshold=500", "--accesslog=/Users/brasaeed/Downloads/Java_MySQL_Test/access.log"};
 		List<LogComment> logComments = parserService.extractLogs(args);
 		assertThat(logComments).isNotEmpty();
 
@@ -38,7 +38,7 @@ public class ParserTests {
 
 	@Test
 	public void testExtractLogsExpectEmptyList() throws IOException {
-		String[] args = new String[]{"--duration=daily", "--threshold=500", "--accesslog=/Users/brasaeed/Downloads/Java_MySQL_Test/access.log"};
+		String[] args = {"--duration=daily", "--threshold=500", "--accesslog=/Users/brasaeed/Downloads/Java_MySQL_Test/access.log"};
 		List<LogComment> logComments = parserService.extractLogs(args);
 		assertThat(logComments).isEmpty();
 
