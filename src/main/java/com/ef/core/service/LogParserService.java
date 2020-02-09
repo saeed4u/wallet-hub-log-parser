@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -83,7 +84,6 @@ public class LogParserService {
 
 	private Log parseLog(String[] splittedLine) throws DateTimeParseException {
 		Log log = new Log();
-
 		LocalDateTime startDateTime = LocalDateTime.parse(splittedLine[0], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
 		log.setRequestDateTime(startDateTime);
 		log.setIp(splittedLine[1]);
